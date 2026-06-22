@@ -1,12 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekdays Hub</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WD// Studio Hub</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0ede8;
+  --ink: #0d0d0d;
+  --dim: #666;
+  --muted: #999;
+  --border: #d0cdc8;
+  --border-light: #e0ddd8;
+  --panel: #e8e5e0;
+  --panel-dark: #dedad4;
+  --mono: 'Space Mono', 'Courier New', monospace;
+  --status-active: #407040;
+  --status-hold: #806020;
+  --status-complete: #404040;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-family: var(--mono);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 6rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* HEADER */
+.hd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-bottom: 1.2rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.hd-logo { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.hd-sub { font-size: 10px; letter-spacing: 0.15em; color: var(--dim); text-transform: uppercase; display: block; }
+.hd-right { text-align: right; }
+.hd-date { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 4px; }
+.hd-time { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; display: block; }
+
+/* STATS ROW */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+.stat {
+  background: var(--bg);
+  padding: 16px 18px;
+}
+.stat-val { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; display: block; line-height: 1; margin-bottom: 6px; }
+.stat-label { font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); display: block; }
+.stat-val.active { color: var(--status-active); }
+.stat-val.hold { color: var(--status-hold); }
+
+/* SECTION */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.section-count { font-size: 9px; letter-spacing: 0.1em; color: var(--border); text-transform: uppercase; }
+
+/* PROJECT CARD */
+.project {
+  border: 1px solid var(--border);
+  border-top: none;
+  margin-bottom: 1px;
+  background: var(--bg);
+}
+.project-head {
+  display: flex;
+  align-items: stretch;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.1s;
+}
+.project.open .project-head { border-bottom-color: var(--border); }
+.project-head:hover { background: var(--panel); }
+
+.project-status-bar {
+  width: 3px;
+  flex-shrink: 0;
+}
+.project-status-bar.active { background: var(--status-active); }
+.project-status-bar.hold { background: var(--status-hold); }
+.project-status-bar.complete { background: var(--status-complete); }
+
+.project-meta {
+  flex: 1;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.project-name { font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.project-client { font-size: 10px; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; }
+.project-type {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.project-status-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.project-status-tag.active { color: var(--status-active); }
+.project-status-tag.hold { color: var(--status-hold); }
+.project-status-tag.complete { color: var(--status-complete); }
+.project-toggle {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* PROJECT BODY */
+.project-body { display: none; }
+.project.open .project-body { display: grid; grid-template-columns: 1fr 1fr; }
+
+.project-col {
+  padding: 20px 20px;
+  border-right: 1px solid var(--border-light);
+}
+.project-col:last-child { border-right: none; }
+.project-col.full { grid-column: 1 / -1; border-right: none; border-top: 1px solid var(--border-light); }
+
+.col-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 12px;
+}
+.col-label::before { content: '// '; color: #ccc; }
+
+/* INFO ROWS */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-light);
+  gap: 1rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-k { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+.info-v { font-size: 11px; color: var(--ink); font-weight: 700; text-align: right; letter-spacing: 0.02em; }
+
+/* LINKS */
+.link-group { display: flex; flex-direction: column; gap: 1px; }
+.hub-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  text-decoration: none;
+  transition: background 0.08s;
+  gap: 1rem;
+}
+.hub-link:hover { background: var(--panel-dark); }
+.hub-link-left { display: flex; align-items: center; gap: 10px; }
+.hub-link-type {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hub-link-type.client { border-color: #a0c0a0; color: #407040; }
+.hub-link-type.internal { border-color: #a0b0c0; color: #305060; }
+.hub-link-type.drive { border-color: #c0b0a0; color: #604020; }
+.hub-link-type.figma { border-color: #c0a0c0; color: #604060; }
+.hub-link-type.proposal { border-color: #c0c0a0; color: #606020; }
+.hub-link-label { font-size: 11px; color: var(--ink); letter-spacing: 0.02em; }
+.hub-link-arrow { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+
+/* CONTACTS */
+.contact-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.contact-item:last-child { border-bottom: none; }
+.contact-name { font-size: 11px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 3px; letter-spacing: 0.02em; }
+.contact-role { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+.contact-email { font-size: 10px; color: var(--dim); letter-spacing: 0.02em; text-decoration: none; display: block; }
+.contact-email:hover { color: var(--ink); }
+
+/* BRIEF */
+.brief-text {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 2;
+  letter-spacing: 0.02em;
+}
+
+/* NEXT UP */
+.nextup {
+  background: var(--panel);
+  border: 1px solid var(--border-light);
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+.nextup-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 5px; }
+.nextup-val { font-size: 11px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 2px; }
+.nextup-date { font-size: 10px; color: var(--dim); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* TICKER */
+.ticker-wrap { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--border); overflow: hidden; }
+.ticker { display: flex; white-space: nowrap; animation: tick 32s linear infinite; }
+.ticker span { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #ccc; padding-right: 4rem; }
+@keyframes tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+.cursor { display: inline-block; width: 9px; height: 14px; background: var(--ink); margin-left: 3px; vertical-align: middle; animation: blink 1s step-end infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+@media (max-width: 640px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .project.open .project-body { grid-template-columns: 1fr; }
+  .project-col { border-right: none; border-top: 1px solid var(--border-light); }
+  .project-col:first-child { border-top: none; }
+  .project-meta { flex-wrap: wrap; gap: 0.8rem; }
+}
+</style>
 </head>
 <body>
-  <h1>Weekdays Hub</h1>
-  <p>Coming soon.</p>
+<div class="page">
+
+  <div class="hd">
+    <div>
+      <span class="hd-logo">weekdays//</span>
+      <span class="hd-sub">studio hub</span>
+    </div>
+    <div class="hd-right">
+      <span class="hd-date" id="hd-date"></span>
+      <span class="hd-time" id="hd-time"></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-val" id="stat-total">01</span>
+      <span class="stat-label">Active projects</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val active" id="stat-active">01</span>
+      <span class="stat-label">In progress</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val hold" id="stat-hold">00</span>
+      <span class="stat-label">On hold</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val" id="stat-complete">00</span>
+      <span class="stat-label">Completed</span>
+    </div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="section-head">
+    <span class="section-title">// projects</span>
+    <span class="section-count">2026</span>
+  </div>
+
+  <!-- CEREMONY -->
+  <div class="project open" id="proj-ceremony">
+    <div class="project-head" onclick="toggleProject('proj-ceremony')">
+      <div class="project-status-bar active"></div>
+      <div class="project-meta">
+        <div>
+          <span class="project-name">Ceremony<span class="cursor"></span></span>
+          <span class="project-client">Nathan Wallace</span>
+        </div>
+        <span class="project-type">Brand + Interiors</span>
+        <span class="project-status-tag active">Active</span>
+      </div>
+      <div class="project-toggle" id="toggle-proj-ceremony">&#8593;</div>
+    </div>
+    <div class="project-body">
+      <div class="project-col">
+        <span class="col-label">project info</span>
+        <div class="info-row"><span class="info-k">Start</span><span class="info-v">23 June 2026</span></div>
+        <div class="info-row"><span class="info-k">Duration</span><span class="info-v">9 weeks</span></div>
+        <div class="info-row"><span class="info-k">Delivery</span><span class="info-v">25 August 2026</span></div>
+        <div class="info-row"><span class="info-k">Fee</span><span class="info-v">$70,000 + GST</span></div>
+        <div class="info-row"><span class="info-k">Location</span><span class="info-v">Brisbane, QLD</span></div>
+        <div class="info-row"><span class="info-k">Phase</span><span class="info-v">01 — Concept</span></div>
+        <div class="nextup">
+          <span class="nextup-label">next check-in</span>
+          <span class="nextup-val">Check-in 01 — Brand direction + Spatial concept</span>
+          <span class="nextup-date">Thu 3 July, 2:30pm</span>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">links</span>
+        <div class="link-group">
+          <a class="hub-link" href="https://week-days-proposals-2026-ceremony.netlify.app" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type proposal">Proposal</span><span class="hub-link-label">Client proposal</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type client">Client</span><span class="hub-link-label">Project schedule</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type internal">Internal</span><span class="hub-link-label">Deliverables checklist</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type figma">Figma</span><span class="hub-link-label">Design file</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type drive">Drive</span><span class="hub-link-label">Project folder</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">contacts</span>
+        <div class="contact-item">
+          <span class="contact-name">Nathan Wallace</span>
+          <span class="contact-role">Client — Lead</span>
+          <a class="contact-email" href="mailto:nathan@ceremony.com.au">nathan@ceremony.com.au</a>
+        </div>
+        <div class="contact-item">
+          <span class="contact-name">Kathryn</span>
+          <span class="contact-role">Client — Stakeholder</span>
+          <a class="contact-email" href="#">TBC</a>
+        </div>
+        <div class="contact-item">
+          <span class="contact-name">Josh</span>
+          <span class="contact-role">Client — Stakeholder</span>
+          <a class="contact-email" href="#">TBC</a>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">brief</span>
+        <p class="brief-text">Classic American diner, modernised and refined. Tight deli menu — breakfast and lunch sandwiches, pancakes, salad to order, cherry pies. Coffee and matcha menu. No salad cabinet or soft serve. References: Walrus, Operator Diner (Melbourne).<br><br>Scope covers FOH brand identity and interior design up to and including the main counter. Construction documentation for FOH only.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MELROSE MARKET -->
+  <div class="project" id="proj-melrose">
+    <div class="project-head" onclick="toggleProject('proj-melrose')">
+      <div class="project-status-bar hold"></div>
+      <div class="project-meta">
+        <div>
+          <span class="project-name">Melrose Market</span>
+          <span class="project-client">Josh Shedden</span>
+        </div>
+        <span class="project-type">Brand + Signage + Web</span>
+        <span class="project-status-tag hold">Pending</span>
+      </div>
+      <div class="project-toggle" id="toggle-proj-melrose">&#8595;</div>
+    </div>
+    <div class="project-body">
+      <div class="project-col">
+        <span class="col-label">project info</span>
+        <div class="info-row"><span class="info-k">Location</span><span class="info-v">Gold Coast, QLD</span></div>
+        <div class="info-row"><span class="info-k">Streams</span><span class="info-v">Brand, Signage, Web</span></div>
+        <div class="info-row"><span class="info-k">Status</span><span class="info-v">Proposal sent</span></div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">links</span>
+        <div class="link-group">
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type proposal">Proposal</span><span class="hub-link-label">Client proposal</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type drive">Drive</span><span class="hub-link-label">Project folder</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">contacts</span>
+        <div class="contact-item">
+          <span class="contact-name">Josh Shedden</span>
+          <span class="contact-role">Client — Lead</span>
+          <a class="contact-email" href="#">TBC</a>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">brief</span>
+        <p class="brief-text">Gold Coast cafe. Three independently approvable streams — brand identity and packaging, signage, website.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCO DELI -->
+  <div class="project" id="proj-disco">
+    <div class="project-head" onclick="toggleProject('proj-disco')">
+      <div class="project-status-bar hold"></div>
+      <div class="project-meta">
+        <div>
+          <span class="project-name">Disco Deli / Disco Sugo</span>
+          <span class="project-client">John + Alessio</span>
+        </div>
+        <span class="project-type">Brand + Interiors + Signage</span>
+        <span class="project-status-tag hold">Pending</span>
+      </div>
+      <div class="project-toggle" id="toggle-proj-disco">&#8595;</div>
+    </div>
+    <div class="project-body">
+      <div class="project-col">
+        <span class="col-label">project info</span>
+        <div class="info-row"><span class="info-k">Location</span><span class="info-v">Cremorne, VIC</span></div>
+        <div class="info-row"><span class="info-k">Venues</span><span class="info-v">Two</span></div>
+        <div class="info-row"><span class="info-k">Status</span><span class="info-v">Early stage</span></div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">links</span>
+        <div class="link-group">
+          <a class="hub-link" href="#" target="_blank">
+            <div class="hub-link-left"><span class="hub-link-type drive">Drive</span><span class="hub-link-label">Project folder</span></div>
+            <span class="hub-link-arrow">&#8599;</span>
+          </a>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">contacts</span>
+        <div class="contact-item">
+          <span class="contact-name">John</span>
+          <span class="contact-role">Developer — Interiors + Signage</span>
+          <a class="contact-email" href="#">TBC</a>
+        </div>
+        <div class="contact-item">
+          <span class="contact-name">Alessio</span>
+          <span class="contact-role">Operator — Brand</span>
+          <a class="contact-email" href="#">TBC</a>
+        </div>
+      </div>
+      <div class="project-col">
+        <span class="col-label">brief</span>
+        <p class="brief-text">Two-venue hospitality project in Cremorne VIC. Developer client (John) covering interiors and signage. Operator client (Alessio) covering brand.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <span>weekdays studio hub &mdash; Brisbane + Melbourne &mdash; 2026 &nbsp;&nbsp;&nbsp;&nbsp;</span>
+      <span>weekdays studio hub &mdash; Brisbane + Melbourne &mdash; 2026 &nbsp;&nbsp;&nbsp;&nbsp;</span>
+      <span>weekdays studio hub &mdash; Brisbane + Melbourne &mdash; 2026 &nbsp;&nbsp;&nbsp;&nbsp;</span>
+      <span>weekdays studio hub &mdash; Brisbane + Melbourne &mdash; 2026 &nbsp;&nbsp;&nbsp;&nbsp;</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleProject(id) {
+  var el = document.getElementById(id);
+  var toggle = document.getElementById('toggle-' + id);
+  el.classList.toggle('open');
+  toggle.innerHTML = el.classList.contains('open') ? '&#8593;' : '&#8595;';
+}
+
+function updateClock() {
+  var now = new Date();
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('hd-date').textContent = days[now.getDay()] + ' ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  var h = now.getHours().toString().padStart(2,'0');
+  var m = now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('hd-time').textContent = h + ':' + m;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+function updateStats() {
+  var projects = document.querySelectorAll('.project');
+  var active = document.querySelectorAll('.project-status-bar.active').length;
+  var hold = document.querySelectorAll('.project-status-bar.hold').length;
+  var complete = document.querySelectorAll('.project-status-bar.complete').length;
+  document.getElementById('stat-total').textContent = String(projects.length).padStart(2,'0');
+  document.getElementById('stat-active').textContent = String(active).padStart(2,'0');
+  document.getElementById('stat-hold').textContent = String(hold).padStart(2,'0');
+  document.getElementById('stat-complete').textContent = String(complete).padStart(2,'0');
+}
+updateStats();
+</script>
 </body>
 </html>
